@@ -1,0 +1,80 @@
+{% args recepts, steps %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Notes</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+</head>
+<body>
+<div class="container content">
+    <div class="col-md-6 col-sm-8 col-xs-12">
+        <div class="page-header">
+            <div class="row">
+                <div class="col-md-10 col-sm-8 col-xs-8">
+                    <div class="form-group">
+                        <select class="form-control" id="sel1">
+                            {% for recept in recepts %}
+                            <option> {{ recept[1] }} </option>
+                            {% endfor %}
+                            <option>Каша молочная рисовая</option>
+                            <option>Макароны</option>
+                            <option>Рыба на пару</option>
+                            <option>Котлеты</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-default"><span class="glyphicon glyphicon-play"></span>
+                        Старт
+                    </button>
+                </div>
+            </div>
+        </div>
+        <ul class="nav nav-tabs">
+            <li class="active"><a data-toggle="tab" href="#home">Приготовление</a></li>
+            <li><a data-toggle="tab" href="#menu1">Описание</a></li>
+        </ul>
+        <div class="row">
+            <div class="col-md-12 col-sm-12 col-xs-12">
+                <div class="tab-content">
+                    <div id="home" class="tab-pane fade in active">
+                        <br>
+                        <div class="panel panel-default">
+                            <div class="panel-heading">Шаг 1</div>
+                            <div class="panel-body">
+                                <div class="row col-md-4 col-sm-4 col-xs-4">
+                                    <h1>100 C</h1>
+
+                                </div>
+                                <div class="row col-md-4 col-sm-4 col-xs-4">
+
+                                    <h1>120min</h1>
+                                </div>
+                            </div>
+                            <div class="panel-footer">Вскипятите воду</div>
+                        </div>
+                        <br>
+                        <div class="panel panel-default">
+                            <div class="panel-heading">Panel Heading</div>
+                            <div class="panel-body">Panel Content</div>
+                            <div class="panel-footer">Panel Footer</div>
+                        </div>
+
+                    </div>
+                    <div id="menu1" class="tab-pane fade">
+                        <h3>Menu 1</h3>
+                        <p>Some content in menu 1.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
+
