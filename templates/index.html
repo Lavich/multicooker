@@ -19,12 +19,10 @@
                     <div class="form-group">
                         <select class="form-control" id="sel1">
                             {% for recept in recepts %}
-                            <option> {{ recept[1] }} </option>
+                                <option value= "{{ recept.id }}"> 
+                                    {{ recept.name }} 
+                                </option>
                             {% endfor %}
-                            <option>Каша молочная рисовая</option>
-                            <option>Макароны</option>
-                            <option>Рыба на пару</option>
-                            <option>Котлеты</option>
                         </select>
                     </div>
                 </div>

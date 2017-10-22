@@ -6,7 +6,7 @@ import btreedb as uorm
 import btree
 
 
-db = uorm.DB("notes.db")
+db = uorm.DB("recept.db")
 
 class Recept(uorm.Model):
 
@@ -31,6 +31,8 @@ class Recept(uorm.Model):
             yield row
 
 
+
+
 class Step(uorm.Model):
 
     __db__ = db
@@ -48,6 +50,13 @@ class Step(uorm.Model):
         ("description", ("TEXT", "")),
     ])
 
+
+    @classmethod
+    def recept(cls, recept_id):
+        steps = cls.scan()
+        for step in steps:
+            if step.recept_id == recept_id:
+                yield step
 
     @classmethod
     def public(cls):

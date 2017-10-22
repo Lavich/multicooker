@@ -1,5 +1,3 @@
-#from flask import abort, jsonify, render_template, request
-
 #from .app import app
 #from .models import Recept, Step
 from app import app
@@ -19,8 +17,9 @@ def get_page():
 @app.route("/")
 def index(request, response):
     yield from picoweb.start_response(response)
-    recepts = Recept.public()
-    steps = Step.public()
+    recepts = Recept.scan()
+    steps = Recept.public()
+    #print(list(steps))
     yield from app.render_template(response, 'index.html', (recepts,steps,))
 
 '''
