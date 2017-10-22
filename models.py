@@ -6,11 +6,13 @@ import btreedb as uorm
 import btree
 
 
-db = uorm.DB("recept.db")
+db1 = uorm.DB("recept.db")
+db2 = uorm.DB("step.db")
+
 
 class Recept(uorm.Model):
 
-    __db__ = db
+    __db__ = db1
     __table__ = "recept"
     __schema__ = OrderedDict([
         ("id", ("INT", 0)),
@@ -35,7 +37,7 @@ class Recept(uorm.Model):
 
 class Step(uorm.Model):
 
-    __db__ = db
+    __db__ = db2
     __table__ = "step"
     __schema__ = OrderedDict([
         ("id", ("INT", 0)),

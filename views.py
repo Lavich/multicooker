@@ -15,11 +15,20 @@ def get_page():
     return min(int(page), 1)
 
 @app.route("/")
+@app.route("^/recepts/$")
 def index(request, response):
     yield from picoweb.start_response(response)
     recepts = Recept.scan()
-    steps = Recept.public()
+    steps = Recept.scan()
     #print(list(steps))
+    yield from app.render_template(response, 'index.html', (recepts,steps,))
+
+@app.route(re.compile('^/recepts/(.+)'), methods=['GET'])
+def archive_note(request, response):
+    pkey = picoweb.utils.unquote_plus(request.url_match.group(1))
+    recepts = Recept.scan()
+    steps = Step.recept(pkey)
+    yield from picoweb.start_response(response)
     yield from app.render_template(response, 'index.html', (recepts,steps,))
 
 '''
