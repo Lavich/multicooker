@@ -1,35 +1,56 @@
 #from .app import app
-#from .models import Recept, Step
+#from .models import Recipe, Step
 from app import app
-from models import Recept, Step
+from models import Recipe, Step
 
 import ure as re
 import picoweb
 #from . import ijson
 import ijson
 
-def get_page():
-    page = request.args.get('page')
-    if not page or not page.isdigit():
-        return 1
-    return min(int(page), 1)
+host = "127.0.0.1"
+port = 8081
+host_port = host + ':' + str(port) + '/'
 
 @app.route("/")
-@app.route("^/recepts/$")
 def index(request, response):
     yield from picoweb.start_response(response)
-    recepts = Recept.scan()
-    steps = Recept.scan()
+    Recipes = Recipe.scan()
+    steps = Recipe.scan()
     #print(list(steps))
-    yield from app.render_template(response, 'index.html', (recepts,steps,))
+    yield from app.render_template(response, 'index.html', (Recipes,steps,))
 
-@app.route(re.compile('^/recepts/(.+)'), methods=['GET'])
+@app.route(re.compile('^/api/$'), methods=['GET'])
+def api(request, response):
+    api_url = {
+        'Recipes': host_port + '/api/recipes',
+        'multicooker': host_port + '/api/multicooker'
+    }
+    yield from picoweb.jsonify(response, api_url)
+
+@app.route(re.compile('^/api/recipes/$'), methods=['GET'])
+def api(request, response):
+    yield from picoweb.jsonify(response, list(Recipe.json()))
+
+@app.route(re.compile('^/recipes/(.+)'), methods=['GET'])
 def archive_note(request, response):
     pkey = picoweb.utils.unquote_plus(request.url_match.group(1))
-    recepts = Recept.scan()
-    steps = Step.recept(pkey)
+    Recipes = Recipe.scan()
+    steps = Step.Recipe(pkey)
     yield from picoweb.start_response(response)
-    yield from app.render_template(response, 'index.html', (recepts,steps,))
+    yield from app.render_template(response, 'index.html', (Recipes,steps,))
+
+@app.route(re.compile('^/api/$'), methods=['GET'])
+def api(request, response):
+    api_url = {
+        'Recipes': 'http://' + host + ':8081/api/Recipes',
+        'status': 'http://localhost:8081/api/status'
+    }
+    yield from picoweb.jsonify(response, api_url)
+
+
+
+
 
 '''
 @app.route('/', methods=['GET', 'POST'])
