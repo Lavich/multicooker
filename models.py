@@ -6,14 +6,14 @@ import btreedb as uorm
 import btree
 
 
-db1 = uorm.DB("recept.db")
+db1 = uorm.DB("recipe.db")
 db2 = uorm.DB("step.db")
 
 
-class Recept(uorm.Model):
+class Recipe(uorm.Model):
 
     __db__ = db1
-    __table__ = "recept"
+    __table__ = "recipe"
     __schema__ = OrderedDict([
         ("id", ("INT", 0)),
         ("archived", ("INT", 0)),
@@ -25,14 +25,26 @@ class Recept(uorm.Model):
     @classmethod
     def public(cls):
         print("public")
-        for v in cls.__db__.db.values(None, None, btree.DESC):
+        for v in cls.__db__.db.values():
             res = ujson.loads(v)
             row = cls.Row(*res)
             if row.archived:
                 continue
             yield row
 
-
+    @classmethod
+    def json(cls):
+        print("json")
+        keys = cls.__schema__.keys()
+        for v in cls.__db__.db.values():
+            res = ujson.loads(v)
+            row = cls.Row(*res)
+            if row.archived:
+                continue
+            d = dict()
+            for key, value in zip(keys, row):
+                d[key] = value
+            yield d
 
 
 class Step(uorm.Model):
@@ -41,7 +53,7 @@ class Step(uorm.Model):
     __table__ = "step"
     __schema__ = OrderedDict([
         ("id", ("INT", 0)),
-        ("recept_id", ("INT", 0)),
+        ("recipe_id", ("INT", 0)),
         ("archived", ("INT", 0)),
         ("number", ("INT", 0)),
         ("temperature", ("INT", 100)),
@@ -54,18 +66,11 @@ class Step(uorm.Model):
 
 
     @classmethod
-    def recept(cls, recept_id):
-        steps = cls.scan()
-        for step in steps:
-            if step.recept_id == recept_id:
-                yield step
-
-    @classmethod
-    def public(cls):
+    def filter_on_recipe(cls, recipe_id):
         print("public")
-        for v in cls.__db__.db.values(None, None, btree.DESC):
+        for v in cls.__db__.db.values():
             res = ujson.loads(v)
             row = cls.Row(*res)
-            if row.archived:
-                continue
-            yield row
+            if row.recipe_id == recipe_id and not row.archived:
+                yield row
+            
