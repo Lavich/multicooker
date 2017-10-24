@@ -4,7 +4,7 @@ api = {
 	'multicooker': 'host:port/api/multicooker'
 }
 
-#'/api/recepts'
+#'/api/recipes'
 recipes = {'recipes':
 	[
 		{
@@ -20,7 +20,7 @@ recipes = {'recipes':
 	]
 }
 
-#'/api/recepts/1'
+#'/api/recipes/1'
 recipe = {
 	'name': 'Pasta',
 	'url': 'host:port/api/recipes/1',
