@@ -10,7 +10,8 @@ import ijson
 
 host = "127.0.0.1"
 port = 8081
-host_port = host + ':' + str(port) + '/'
+host_port = 'http://' + host + ':' + str(port) 
+
 
 @app.route("/")
 def index(request, response):
@@ -20,33 +21,43 @@ def index(request, response):
     #print(list(steps))
     yield from app.render_template(response, 'index.html', (Recipes,steps,))
 
-@app.route(re.compile('^/api/$'), methods=['GET'])
+
+@app.route(re.compile('^/api$'), methods=['GET'])
 def api(request, response):
     api_url = {
-        'Recipes': host_port + '/api/recipes',
+        'recipes': host_port + '/api/recipes',
         'multicooker': host_port + '/api/multicooker'
     }
     yield from picoweb.jsonify(response, api_url)
 
-@app.route(re.compile('^/api/recipes/$'), methods=['GET'])
-def api(request, response):
-    yield from picoweb.jsonify(response, list(Recipe.json()))
 
-@app.route(re.compile('^/recipes/(.+)'), methods=['GET'])
-def archive_note(request, response):
+@app.route(re.compile('^/api/recipes$'), methods=['GET'])
+def recipes(request, response):
+    recipes = Recipe.all()
+    r = []
+    for recipe in recipes:
+        recipe['url'] = host_port + '/api/recipes/' + recipe['id']
+        recipe.pop('id')
+        r.append(recipe)
+    yield from picoweb.jsonify(response, {'recipes': r})
+
+
+@app.route(re.compile('^/api/recipes/(.+)'), methods=['GET'])
+def recipe(request, response):
     pkey = picoweb.utils.unquote_plus(request.url_match.group(1))
-    Recipes = Recipe.scan()
-    steps = Step.Recipe(pkey)
-    yield from picoweb.start_response(response)
-    yield from app.render_template(response, 'index.html', (Recipes,steps,))
+    steps = Step.filter_on_recipe(pkey)
+    s = []
+    for step in steps:
+        s.append(step)
+    recipe = Recipe.get_id(pkey)
+    if recipe:
+        recipe['steps'] = s
+        recipe['url'] = host_port + '/api/recipes/' + recipe['id']
+        recipe['start'] = host_port + '/api/multicooker?start=' + recipe['id']
+        recipe['stop'] = host_port + '/api/multicooker?stop='
+        recipe.pop('id')
+    yield from picoweb.jsonify(response, {'recipes': recipe})
 
-@app.route(re.compile('^/api/$'), methods=['GET'])
-def api(request, response):
-    api_url = {
-        'Recipes': 'http://' + host + ':8081/api/Recipes',
-        'status': 'http://localhost:8081/api/status'
-    }
-    yield from picoweb.jsonify(response, api_url)
 
 
 

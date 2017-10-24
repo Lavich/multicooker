@@ -23,17 +23,20 @@ class Recipe(uorm.Model):
 
 
     @classmethod
-    def public(cls):
-        print("public")
-        for v in cls.__db__.db.values():
-            res = ujson.loads(v)
-            row = cls.Row(*res)
-            if row.archived:
-                continue
-            yield row
+    def get_id(cls, pkey):
+        try:
+            int(pkey)
+        except:
+            return
+        keys = cls.__schema__.keys()
+        row = cls.Row(*ujson.loads(cls.__db__.db[pkey]))
+        d = dict()
+        for key, value in zip(keys, row):
+            d[key] = value
+        return d
 
     @classmethod
-    def json(cls):
+    def all(cls):
         print("json")
         keys = cls.__schema__.keys()
         for v in cls.__db__.db.values():
@@ -67,10 +70,14 @@ class Step(uorm.Model):
 
     @classmethod
     def filter_on_recipe(cls, recipe_id):
-        print("public")
+        keys = cls.__schema__.keys()
         for v in cls.__db__.db.values():
             res = ujson.loads(v)
             row = cls.Row(*res)
-            if row.recipe_id == recipe_id and not row.archived:
+            if row.archived:
                 yield row
-            
+            if row.recipe_id == recipe_id:
+                d = dict()
+                for key, value in zip(keys, row):
+                    d[key] = value
+                yield d
