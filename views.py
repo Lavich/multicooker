@@ -13,7 +13,7 @@ port = 8081
 host_port = 'http://' + host + ':' + str(port) 
 
 
-@app.route("/")
+@app.route('/')
 def index(request, response):
     yield from picoweb.start_response(response)
     Recipes = Recipe.scan()
@@ -22,7 +22,7 @@ def index(request, response):
     yield from app.render_template(response, 'index.html', (Recipes,steps,))
 
 
-@app.route(re.compile('^/api$'), methods=['GET'])
+@app.route('/api', methods=['GET'])
 def api(request, response):
     api_url = {
         'recipes': host_port + '/api/recipes',
@@ -31,8 +31,19 @@ def api(request, response):
     yield from picoweb.jsonify(response, api_url)
 
 
-@app.route(re.compile('^/api/recipes$'), methods=['GET'])
+@app.route('/api/recipes', methods=['GET', 'POST'])
 def recipes(request, response):
+    print(request.method)
+    if request.method == 'POST':
+        print(request.headers)
+        yield from request.read_form_data()
+        print(request.form)
+        if request.form.get('content'):
+            print(2)
+        print(3)
+        yield from picoweb.jsonify(response, {'success': 0})
+        return
+
     recipes = Recipe.all()
     r = []
     for recipe in recipes:
@@ -57,9 +68,6 @@ def recipe(request, response):
         recipe['stop'] = host_port + '/api/multicooker?stop='
         recipe.pop('id')
     yield from picoweb.jsonify(response, {'recipes': recipe})
-
-
-
 
 
 

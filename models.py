@@ -21,6 +21,10 @@ class Recipe(uorm.Model):
         ("description", ("TEXT", "")),
     ])
 
+    @classmethod
+    def auto_inc_field(cls):
+        b = list(cls.__db__.db.keys())[-1]
+        return int(b.decode()) + 1
 
     @classmethod
     def get_id(cls, pkey):
