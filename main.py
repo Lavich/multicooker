@@ -30,11 +30,10 @@ def main(**params):
    # app.run(debug=True, **params)
     #app.run(debug=True, host='192.168.43.53', port=80, **params)
 
-    app.my_run(debug=True)
-    
+    app.init()
+    app.debug = True    
+    print("* Running on http://%s:%s/" % (host, port))
     loop = asyncio.get_event_loop()
-    if app.debug:
-            print("* Running on http://%s:%s/" % (host, port))
     loop.create_task(asyncio.start_server(app._handle, host, port))
     loop.create_task(toggle())
     loop.run_forever()

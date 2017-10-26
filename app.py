@@ -2,6 +2,7 @@ import gc
 import picoweb
 import models
 
+
 class DBApp(picoweb.WebApp):
 
     def init(self):
@@ -10,14 +11,6 @@ class DBApp(picoweb.WebApp):
         models.Recipe.create_table(True)
         models.Step.create_table(True)
         super().init()
-
-    def my_run(self, debug=False, lazy_init=False):
-    	gc.collect()
-        self.debug = int(debug)
-        self.init()
-        if not lazy_init:
-            for app in self.mounts:
-                app.init()
 
 
 app = DBApp('__main__')
