@@ -9,5 +9,12 @@ $(document).ready(function(){
 
 function handleSelect(elm)
 {
-  window.location = elm.value;
+  $.getJSON( elm.value, function( data ) {
+    var items = [];
+    var myNode = $('.step');
+    myNode.remove();
+    $.each( data.recipe.steps, function( key, val ) {
+      $('#list-steps').append('<li class="step">'+val.id+'</li>');
+    });     
+  });
 }

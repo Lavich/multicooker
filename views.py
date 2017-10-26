@@ -67,7 +67,7 @@ def recipe(request, response):
         recipe['start'] = host_port + '/api/multicooker?start=' + recipe['id']
         recipe['stop'] = host_port + '/api/multicooker?stop='
         recipe.pop('id')
-    yield from picoweb.jsonify(response, {'recipes': recipe})
+    yield from picoweb.jsonify(response, {'recipe': recipe})
 
 
 
