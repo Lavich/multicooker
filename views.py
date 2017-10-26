@@ -37,9 +37,17 @@ def recipes(request, response):
     if request.method == 'POST':
         print(request.headers)
         yield from request.read_form_data()
-        print(request.form)
-        if request.form.get('content'):
-            print(2)
+        data = request.form
+        print(data)
+        if data.get('id'):
+            recept_id = data.get('id')[0]
+            try:
+                recipe = Recipe.get_id(recept_id)
+            except:
+                recipe = None
+
+            print(recipe)
+
         print(3)
         yield from picoweb.jsonify(response, {'success': 0})
         return

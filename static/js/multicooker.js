@@ -7,12 +7,14 @@ $(document).ready(function(){
   });
 });
 
-function handleSelect(elm)
-{
-  $.getJSON( elm.value, function( data ) {
-    var items = [];
-    var myNode = $('.step');
-    myNode.remove();
+function handleSelect(elm){
+  createSteps(elm.value);
+}
+
+function createSteps(recipeUrl){
+  $.getJSON(recipeUrl, function(data){
+    var oldStep = $('.step');
+    oldStep.remove();
     $.each( data.recipe.steps, function( key, val ) {
       $('#list-steps').append('<li class="step">'+val.id+'</li>');
     });     
