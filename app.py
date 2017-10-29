@@ -6,10 +6,7 @@ import models
 class DBApp(picoweb.WebApp):
 
     def init(self):
-        models.db1.connect()
-        models.db2.connect()
-        models.Recipe.create_table(True)
-        models.Step.create_table(True)
+        models.db.connect()
         super().init()
 
 

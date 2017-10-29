@@ -1,87 +1,80 @@
-from ucollections import OrderedDict
 import ujson
-import utime
 
-import btreedb as uorm
 import btree
 
+class DB:
 
-db1 = uorm.DB("recipe.db")
-db2 = uorm.DB("step.db")
+    def __init__(self, name, **options):
+        self.name = name
+        self.f = None
+        self.db = None
+        self.options = options
 
-
-class Recipe(uorm.Model):
-
-    __db__ = db1
-    __table__ = "recipe"
-    __schema__ = OrderedDict([
-        ("id", ("INT", 0)),
-        ("archived", ("INT", 0)),
-        ("name", ("TEXT", "")),
-        ("description", ("TEXT", "")),
-    ])
-
-    @classmethod
-    def auto_inc_field(cls):
-        b = list(cls.__db__.db.keys())[-1]
-        return int(b.decode()) + 1
-
-    @classmethod
-    def get_id(cls, pkey):
+    def connect(self):
         try:
-            int(pkey)
-        except:
-            return
-        keys = cls.__schema__.keys()
-        row = cls.Row(*ujson.loads(cls.__db__.db[pkey]))
-        d = dict()
-        for key, value in zip(keys, row):
-            d[key] = value
-        return d
+            self.f = open(self.name, "r+b")
+        except OSError:
+            self.f = open(self.name, "w+b")
+        self.db = btree.open(self.f, **self.options)
+
+    def close(self):
+        self.db.close()
+        self.f.close()   
+
+
+db = DB("multicooker.db")
+
+
+class Step:
+    """docstring for Step"""
+    __db__ = db
 
     @classmethod
-    def all(cls):
-        print("json")
-        keys = cls.__schema__.keys()
-        for v in cls.__db__.db.values():
-            res = ujson.loads(v)
-            row = cls.Row(*res)
-            if row.archived:
-                continue
-            d = dict()
-            for key, value in zip(keys, row):
-                d[key] = value
-            yield d
-
-
-class Step(uorm.Model):
-
-    __db__ = db2
-    __table__ = "step"
-    __schema__ = OrderedDict([
-        ("id", ("INT", 0)),
-        ("recipe_id", ("INT", 0)),
-        ("archived", ("INT", 0)),
-        ("number", ("INT", 0)),
-        ("temperature", ("INT", 100)),
-        ("time", ("INT", 10)),
-        ("auto", ("INT", 0)),
-        ("wait", ("INT", 0)),
-        ("bell", ("INT", 0)),
-        ("description", ("TEXT", "")),
-    ])
-
+    def next_id(cls):
+        last_id = 0
+        keys = list(cls.__db__.db.keys())
+        if keys:
+            last_id = int(keys[-1].decode())
+        return str(last_id + 1)
 
     @classmethod
-    def filter_on_recipe(cls, recipe_id):
-        keys = cls.__schema__.keys()
+    def create(cls, value, id=None):
+        if not id:
+            id = cls.next_id()
+        str = ujson.dumps(value)    
+        cls.__db__.db[id] = str
+        cls.__db__.db.flush()
+        return "{}: {}".format(id, str)
+
+    @classmethod
+    def update(cls, id, value):
+        return cls.create(value, id=id)
+
+    @classmethod
+    def filter(cls, **kwargs):
         for v in cls.__db__.db.values():
-            res = ujson.loads(v)
-            row = cls.Row(*res)
-            if row.archived:
-                yield row
-            if row.recipe_id == recipe_id:
-                d = dict()
-                for key, value in zip(keys, row):
-                    d[key] = value
-                yield d
+            if kwargs:
+                for key, value in kwargs.items():
+                    try:
+                        row = v.decode()
+                        row = ujson.loads(row)
+                    except:
+                        row = {}
+                    if type(row) == dict and row.get(key) == value:    
+                        yield v.decode()
+            else:
+                yield v.decode()
+
+    @classmethod
+    def get_list(cls, elem):
+        for v in cls.__db__.db.values():
+            try:
+                row = v.decode()
+                row = ujson.loads(row)
+            except:
+                row = {}
+            if type(row) == dict and row.get(elem):    
+                        yield v.decode()
+
+
+        
