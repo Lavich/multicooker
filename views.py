@@ -16,10 +16,7 @@ host_port = 'http://' + host + ':' + str(port)
 @app.route('/')
 def index(request, response):
     yield from picoweb.start_response(response)
-    Recipes = Recipe.scan()
-    steps = Recipe.scan()
-    #print(list(steps))
-    yield from app.render_template(response, 'index.html', (Recipes,steps,))
+    yield from app.sendfile(response, 'templates/index.html')
 
 
 @app.route('/api', methods=['GET'])
