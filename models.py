@@ -52,6 +52,13 @@ class Step:
 
     @classmethod
     def filter(cls, **kwargs):
+        """
+        >>> filter('recipe_name')
+        ['Pasta', 'Tea', 'Cake']
+
+        >>> filter(recipe_name='Pasta')
+        {'temp': '130', 'time': '60', 'recipe_name': 'Pasta'}
+        """
         for v in cls.__db__.db.values():
             if kwargs:
                 for key, value in kwargs.items():
@@ -61,7 +68,7 @@ class Step:
                     except:
                         row = {}
                     if type(row) == dict and row.get(key) == value:    
-                        yield v.decode()
+                        yield ujson.loads(v.decode())
             else:
                 yield v.decode()
 
@@ -74,7 +81,7 @@ class Step:
             except:
                 row = {}
             if type(row) == dict and row.get(elem):    
-                        yield v.decode()
+                yield row.get(str(elem))
 
 
         

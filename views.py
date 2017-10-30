@@ -1,108 +1,54 @@
 #from .app import app
 #from .models import Recipe, Step
 from app import app
-from models import Recipe, Step
+from models import Step
 
 import ure as re
 import picoweb
-#from . import ijson
 import ijson
 
-host = "127.0.0.1"
-port = 8081
-host_port = 'http://' + host + ':' + str(port) 
+
+def generate_url(name):
+    return 'http://' + app.host + '/' + str(app.port) + name
 
 
 @app.route('/')
 def index(request, response):
-    yield from picoweb.start_response(response)
     yield from app.sendfile(response, 'templates/index.html')
 
 
 @app.route('/api', methods=['GET'])
 def api(request, response):
     api_url = {
-        'recipes': host_port + '/api/recipes',
-        'multicooker': host_port + '/api/multicooker'
+        'steps': generate_url('/api/steps'),
+        'multicooker': generate_url('/api/multicooker')
     }
     yield from picoweb.jsonify(response, api_url)
 
 
-@app.route('/api/recipes', methods=['GET', 'POST'])
-def recipes(request, response):
-    print(request.method)
+@app.route('/api/steps', methods=['GET', 'POST'])
+def steps(request, response):
+    if request.method == 'GET':
+        steps_list = list(set(list(Step.get_list('recipe_name'))))
+        steps = list(map(lambda x: {x: generate_url('/api/steps/' + x)}, steps_list))
+        yield from picoweb.jsonify(response, {'recipes': steps})
+
     if request.method == 'POST':
-        print(request.headers)
         yield from request.read_form_data()
         data = request.form
-        print(data)
-        if data.get('id'):
-            recept_id = data.get('id')[0]
-            try:
-                recipe = Recipe.get_id(recept_id)
-            except:
-                recipe = None
-
-            print(recipe)
-
-        print(3)
-        yield from picoweb.jsonify(response, {'success': 0})
-        return
-
-    recipes = Recipe.all()
-    r = []
-    for recipe in recipes:
-        recipe['url'] = host_port + '/api/recipes/' + recipe['id']
-        recipe.pop('id')
-        r.append(recipe)
-    yield from picoweb.jsonify(response, {'recipes': r})
+        for key in data.keys():
+            data[key] = data[key][0]
+        if data.get('recipe_name'):
+            Step.create(data)
+            steps = {'steps': list(Step.filter(recipe_name=data.get('recipe_name')))}
+            yield from picoweb.jsonify(response, {'steps': steps})
 
 
-@app.route(re.compile('^/api/recipes/(.+)'), methods=['GET'])
-def recipe(request, response):
+
+@app.route(re.compile('^/api/steps/(.+)'), methods=['GET'])
+def step(request, response):
     pkey = picoweb.utils.unquote_plus(request.url_match.group(1))
-    steps = Step.filter_on_recipe(pkey)
-    s = []
-    for step in steps:
-        s.append(step)
-    recipe = Recipe.get_id(pkey)
-    if recipe:
-        recipe['steps'] = s
-        recipe['url'] = host_port + '/api/recipes/' + recipe['id']
-        recipe['start'] = host_port + '/api/multicooker?start=' + recipe['id']
-        recipe['stop'] = host_port + '/api/multicooker?stop='
-        recipe.pop('id')
-    yield from picoweb.jsonify(response, {'recipe': recipe})
+    steps = list(Step.filter(recipe_name=pkey))
+    print(steps)
+    yield from picoweb.jsonify(response, {'steps': steps})
 
-
-
-'''
-@app.route('/', methods=['GET', 'POST'])
-def homepage(request, response):
-    if request.method == 'POST':
-        print(request.headers)
-        yield from request.read_form_data()
-        if request.form.get('content'):
-            note_id = Note.create(content=request.form['content'][0])
-            note = list(Note.get_id(note_id))[0]
-            print("note after create:", note)
-            tmpl = app._load_template('note.html')
-            yield from picoweb.start_response(response, "application/json")
-            yield from response.awriteiter(ijson.idumps({'note': tmpl(note), 'success': 1}))
-            return
-
-        yield from picoweb.jsonify(response, {'success': 0})
-        return
-
-    yield from picoweb.start_response(response)
-#    notes = Note.public().paginate(get_page(), 50)
-    notes = Note.public()
-    yield from app.render_template(response, 'homepage.html', (notes,))
-
-@app.route(re.compile('^/archive/(.+)'), methods=['POST'])
-def archive_note(request, response):
-    pkey = picoweb.utils.unquote_plus(request.url_match.group(1))
-    print("archive_note", pkey)
-    Note.update({"timestamp": pkey}, archived=1)
-    yield from picoweb.jsonify(response, {'success': True})
-'''

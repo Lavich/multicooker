@@ -27,7 +27,7 @@ def main(**params):
 
     loop = asyncio.get_event_loop()
     loop.create_task(asyncio.start_server(app._handle, app.host, app.port))
-    loop.create_task(print42())
+    # loop.create_task(print42())
     loop.run_forever()
     loop.close()
 
