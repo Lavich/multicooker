@@ -29,9 +29,9 @@ def api(request, response):
 @app.route('/api/steps', methods=['GET', 'POST'])
 def steps(request, response):
     if request.method == 'GET':
-        steps_list = list(set(list(Step.get_list('recipe_name'))))
-        steps = list(map(lambda x: {x: generate_url('/api/steps/' + x)}, steps_list))
-        yield from picoweb.jsonify(response, {'recipes': steps})
+        recipe_names = list(set(list(Step.get_list('recipe_name'))))
+        # recipe_names = list(map(lambda x: {x: generate_url('/api/steps/' + x)}, steps_list))
+        yield from picoweb.jsonify(response, {'recipes': recipe_names})
 
     if request.method == 'POST':
         yield from request.read_form_data()
