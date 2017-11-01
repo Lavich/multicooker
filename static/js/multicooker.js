@@ -5,13 +5,6 @@ window.onload = function () {
   stepsViewModel.updateSteps('Pasta');
 }
 
-function stripTrailingSlash(str) {
-  if(str.substr(-1) === '/') {
-    return str.substr(0, str.length - 1);
-  }
-  return str;
-}
-
 function StepsViewModel() {
   var self = this;
   self.apiURI = window.location.href + 'api';
