@@ -38,10 +38,10 @@ class Step:
         return str(last_id + 1)
 
     @classmethod
-    def create(cls, value, id=None):
+    def create(cls, data, id=None):
         if not id:
             id = cls.next_id()
-        str = ujson.dumps(value)    
+        str = ujson.dumps(data)    
         cls.__db__.db[id] = str
         cls.__db__.db.flush()
         return "{}: {}".format(id, str)
@@ -51,16 +51,27 @@ class Step:
         return cls.create(value, id=id)
 
     @classmethod
-    def filter(cls, **kwargs):
+    def filter(cls, *args, **kwargs):
         """
         >>> filter('recipe_name')
         ['Pasta', 'Tea', 'Cake']
 
         >>> filter(recipe_name='Pasta')
-        {'temp': '130', 'time': '60', 'recipe_name': 'Pasta'}
+        {'id': '7', temp': '100', 'time': '8', 'recipe_name': 'Pasta'}
         """
-        for v in cls.__db__.db.values():
-            if kwargs:
+        if args:
+            elem = str(args[0])
+            for v in cls.__db__.db.values():
+                try:
+                    row = v.decode()
+                    row = ujson.loads(row)
+                except:
+                    row = {}
+                if type(row) == dict and row.get(elem):    
+                    yield row.get(elem)
+
+        elif kwargs:
+            for k, v in cls.__db__.db.items():
                 for key, value in kwargs.items():
                     try:
                         row = v.decode()
@@ -68,20 +79,11 @@ class Step:
                     except:
                         row = {}
                     if type(row) == dict and row.get(key) == value:    
-                        yield ujson.loads(v.decode())
-            else:
-                yield v.decode()
-
-    @classmethod
-    def get_list(cls, elem):
-        for v in cls.__db__.db.values():
-            try:
-                row = v.decode()
-                row = ujson.loads(row)
-            except:
-                row = {}
-            if type(row) == dict and row.get(elem):    
-                yield row.get(str(elem))
-
+                        step = ujson.loads(v.decode())
+                        step['id'] = k.decode()
+                        yield step
+        else:
+            for value in cls.__db__.db.values():
+                yield value.decode()
 
         

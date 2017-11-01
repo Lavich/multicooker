@@ -5,7 +5,6 @@ from models import Step
 
 import ure as re
 import picoweb
-import ijson
 
 
 def generate_url(name):
@@ -29,7 +28,7 @@ def api(request, response):
 @app.route('/api/steps', methods=['GET', 'POST'])
 def steps(request, response):
     if request.method == 'GET':
-        recipe_names = list(set(list(Step.get_list('recipe_name'))))
+        recipe_names = list(set(list(Step.filter('recipe_name'))))
         # recipe_names = list(map(lambda x: {x: generate_url('/api/steps/' + x)}, steps_list))
         yield from picoweb.jsonify(response, {'recipes': recipe_names})
 
