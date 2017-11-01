@@ -30,14 +30,6 @@ class Step:
     __db__ = db
 
     @classmethod
-    def next_id(cls):
-        last_id = 0
-        keys = list(cls.__db__.db.keys())
-        if keys:
-            last_id = int(keys[-1].decode())
-        return str(last_id + 1)
-
-    @classmethod
     def create(cls, data, id=None):
         if not id:
             id = cls.next_id()
@@ -47,8 +39,30 @@ class Step:
         return "{}: {}".format(id, str)
 
     @classmethod
-    def update(cls, id, value):
-        return cls.create(value, id=id)
+    def update(cls, id, **kwargs):
+        data = cls.get_id(id)
+        print(data)
+        for key, value in kwargs.items():
+            data[key] = value
+        return cls.create(data, id=id)
+
+    @classmethod
+    def delete(cls, key):
+        key = str(key)
+        del cls.__db__.db[key]
+
+    @classmethod
+    def get_id(cls, key):
+        key = str(key)
+        return ujson.loads(cls.__db__.db[key])
+
+    @classmethod
+    def next_id(cls):
+        last_id = 0
+        keys = list(cls.__db__.db.keys())
+        if keys:
+            last_id = int(keys[-1].decode())
+        return str(last_id + 1)
 
     @classmethod
     def filter(cls, *args, **kwargs):
