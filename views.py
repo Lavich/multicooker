@@ -8,7 +8,7 @@ import picoweb
 
 
 def generate_url(name):
-    return 'http://' + app.host + '/' + str(app.port) + name
+    return 'http://' + app.host + '/' + str(app.port) + name.replace(" ", "-")
 
 
 @app.route('/')
@@ -16,23 +16,36 @@ def index(request, response):
     yield from app.sendfile(response, 'templates/index.html')
 
 
-@app.route('/api', methods=['GET'])
-def api(request, response):
-    api_url = {
-        'steps': generate_url('/api/steps'),
-        'multicooker': generate_url('/api/multicooker')
-    }
-    yield from picoweb.jsonify(response, api_url)
+@app.route('/api/recipes')
+def recipe_list(request, response):
+    """
+    Get list recipes
+    """
+    recipe_names = list(set(list(Step.filter('recipe_name'))))
+    recipe_list = list(map(lambda x: {'name': x, 'url':  generate_url('/api/steps/' + x)}, recipe_names))
+    # recipe_names = list(map(lambda x: {x: generate_url('/api/steps/' + x)}, recipe_names))
+    print(recipe_list)
+    yield from picoweb.jsonify(response, {'recipes': recipe_list})
+
+
+@app.route(re.compile('^/api/recipes/(.+)'))
+def recipe_detail(request, response):
+    """
+    Get detail recipe[recipe_name]
+    """
+    pkey = picoweb.utils.unquote_plus(request.url_match.group(1))
+    pkey = pkey.replace("-", " ")
+    steps = list(Step.filter(recipe_name=pkey))
+    print(steps)
+    yield from picoweb.jsonify(response, {'steps': steps})
 
 
 @app.route('/api/steps', methods=['GET', 'POST'])
-def steps(request, response):
-    if request.method == 'GET':
-        recipe_names = list(set(list(Step.filter('recipe_name'))))
-        # recipe_names = list(map(lambda x: {x: generate_url('/api/steps/' + x)}, steps_list))
-        yield from picoweb.jsonify(response, {'recipes': recipe_names})
-
+def step_list(request, response):
     if request.method == 'POST':
+        """
+        Create new Step
+        """
         yield from request.read_form_data()
         data = request.form
         for key in data.keys():
@@ -43,11 +56,23 @@ def steps(request, response):
             yield from picoweb.jsonify(response, {'steps': steps})
 
 
-
-@app.route(re.compile('^/api/steps/(.+)'), methods=['GET'])
-def step(request, response):
+@app.route(re.compile('^/api/steps/(.+)'), methods=['PUT', 'DELETE'])
+def step_detail(request, response):
     pkey = picoweb.utils.unquote_plus(request.url_match.group(1))
-    steps = list(Step.filter(recipe_name=pkey))
-    print(steps)
-    yield from picoweb.jsonify(response, {'steps': steps})
+    if request.method == 'PUT':
+        """
+        Update Step[id]
+        """
+        yield from request.read_form_data()
+        data = request.form
+        print(data)
+        step = Step.update(pkey, data)
+        print(step)
+        yield from picoweb.jsonify(response, {'success': 'True'})
 
+    if request.method == 'DELETE':
+        """
+        Delete Step[id]
+        """
+        Step.delete(pkey)
+        yield from picoweb.jsonify(response, {'steps': steps})

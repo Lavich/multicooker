@@ -1,15 +1,16 @@
 window.onload = function () {
-  var stepsViewModel = new StepsViewModel();
-  ko.applyBindings(stepsViewModel, $('#main')[0]);
-  stepsViewModel.updateRecipes();
-  stepsViewModel.updateSteps('Pasta');
+
+  var recipesViewModel = new RecipesViewModel();
+  ko.applyBindings(recipesViewModel, $('#main')[0]);
 }
 
-function StepsViewModel() {
+
+function RecipesViewModel() {
   var self = this;
   self.apiURI = window.location.href + 'api';
   self.steps = ko.observableArray();
-  self.recipes = ko.observableArray();
+  self.recipe_list = ko.observableArray();
+  self.recipe = ko.observable('Latvia');
 
   self.ajax = function(uri, method, data) {
     var request = {
@@ -24,19 +25,20 @@ function StepsViewModel() {
     return $.ajax(request);
   }
 
-  self.updateRecipes = function(){
-    self.ajax(self.apiURI + '/steps', 'GET').done(function(data) {
-      self.recipes(data.recipes)
+  self.updateListRecipes = function(){
+    self.ajax(self.apiURI + '/recipes', 'GET').done(function(data) {
+      for (var i = 0; i < data.recipes.length; i++) {
+        self.recipe_list.push(data.recipes[i].name);
+      };
     });
-
   }
+  self.updateListRecipes(); 
 
-  self.updateSteps = function(nameRecipe){
-    self.ajax(self.apiURI + '/steps/' + nameRecipe, 'GET').done(function(data) {
-      console.log(data.steps)
+
+  self.updateSteps = function(){
+    self.ajax(self.apiURI + '/recipes/' + self.recipe(), 'GET').done(function(data) {
       self.steps([]);
       for (var i = 0; i < data.steps.length; i++) {
-        console.log(data.steps[i].recipe_name);
         self.steps.push({
           recipe_name: ko.observable(data.steps[i].recipe_name),
           id: ko.observable(data.steps[i].id),
@@ -48,7 +50,7 @@ function StepsViewModel() {
         });
       };
     });
-  }
+  };
 
   self.edit = function(task, data) {
     self.ajax(task.uri(), 'PUT', data).done(function(res) {
