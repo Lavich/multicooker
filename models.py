@@ -41,7 +41,6 @@ class Step:
     @classmethod
     def update(cls, id, **kwargs):
         data = cls.get_id(id)
-        print(data)
         for key, value in kwargs.items():
             data[key] = value
         return cls.create(data, id=id)
