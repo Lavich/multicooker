@@ -36,13 +36,13 @@ class Step:
         str = ujson.dumps(data)    
         cls.__db__.db[id] = str
         cls.__db__.db.flush()
-        return "{}: {}".format(id, str)
+        data['id'] = id
+        return data
 
     @classmethod
-    def update(cls, id, **kwargs):
+    def update(cls, id, new_data):
         data = cls.get_id(id)
-        for key, value in kwargs.items():
-            data[key] = value
+        data.update(new_data)
         return cls.create(data, id=id)
 
     @classmethod
@@ -58,9 +58,11 @@ class Step:
     @classmethod
     def next_id(cls):
         last_id = 0
-        keys = list(cls.__db__.db.keys())
-        if keys:
-            last_id = int(keys[-1].decode())
+        keys_str = list(cls.__db__.db.keys())
+        if keys_str:
+            keys = list(map(lambda x: int(x), keys_str))
+            keys.sort()
+            last_id = keys[-1]
         return str(last_id + 1)
 
     @classmethod

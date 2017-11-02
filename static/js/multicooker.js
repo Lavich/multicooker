@@ -1,7 +1,11 @@
-window.onload = function () {
 
-  var recipesViewModel = new RecipesViewModel();
+var recipesViewModel = new RecipesViewModel();
+var stepViewModel = new StepViewModel();
+
+
+window.onload = function () {
   ko.applyBindings(recipesViewModel, $('#main')[0]);
+  ko.applyBindings(stepViewModel, $('#step')[0]);
 }
 
 
@@ -10,7 +14,7 @@ function RecipesViewModel() {
   self.apiURI = window.location.href + 'api';
   self.steps = ko.observableArray();
   self.recipe_list = ko.observableArray();
-  self.recipe = ko.observable('Latvia');
+  self.recipe = ko.observable();
 
   self.ajax = function(uri, method, data) {
     var request = {
@@ -20,7 +24,8 @@ function RecipesViewModel() {
       accepts: "application/json",
       cache: false,
       dataType: 'json',
-      data: JSON.stringify(data)
+      data: data
+      // JSON.stringify(data)
     };
     return $.ajax(request);
   }
@@ -43,7 +48,7 @@ function RecipesViewModel() {
           recipe_name: ko.observable(data.steps[i].recipe_name),
           id: ko.observable(data.steps[i].id),
           time: ko.observable(data.steps[i].time),
-          temperature: ko.observable(data.steps[i].temp),
+          temperature: ko.observable(data.steps[i].temperature),
           wait: ko.observable(data.steps[i].wait),
           description: ko.observable(data.steps[i].description),
 
@@ -52,28 +57,78 @@ function RecipesViewModel() {
     });
   };
 
-  self.edit = function(task, data) {
-    self.ajax(task.uri(), 'PUT', data).done(function(res) {
-      self.updateTask(task, res.task);
+  self.beginAdd = function(step)
+  {
+    $('#step').modal('show');
+    stepViewModel.id('');
+    stepViewModel.recipe_name(step.recipe());
+  }
 
+  self.beginEdit = function(step)
+  {
+    $('#step').modal('show');
+    stepViewModel.id(step.id());
+    stepViewModel.recipe_name(step.recipe_name());
+    stepViewModel.description(step.description());
+    stepViewModel.time(step.time());
+    stepViewModel.temperature(step.temperature());
+    stepViewModel.wait(step.wait());
+  }
+
+  self.stepSave = function(step) {
+    var url = 'api/steps';
+    var method = 'POST';
+    if (step.id) {
+      url += '/' + step.id;
+      method = 'PUT';
+    }
+    console.log(url);
+    self.ajax(url, method, step).done(function(data) {
+      console.log(data);
+      if (data.step.recipe_name == self.recipe_name) {
+        self.steps.push({
+          recipe_name: ko.observable(data.step.recipe_name),
+          id: ko.observable(data.step.id),
+          time: ko.observable(data.step.time),
+          temperature: ko.observable(data.step.temperature),
+          wait: ko.observable(data.step.wait),
+          description: ko.observable(data.step.description),
+        });
+      }
+      else{
+        self.recipe_list.push(data.step.recipe_name);
+        self.updateSteps();
+      }
     });
   }
 
-  self.beginAdd = function()
-  {
-    $('#add').modal('show');
-  }
-  self.beginEdit = function(steps) {
-    alert("Edit: " + steps.id());
-  }
-  self.remove = function(steps) {
-    alert("Remove: " + steps.id());
-  }
-  self.markInProgress = function(task) {
-    task.done(false);
-  }
-  self.markDone = function(task) {
-    task.done(true);
+  self.remove = function(step) {
+    console.log(step.id());
+    self.ajax('api/steps/' + step.id(), 'DELETE').done(function() {
+      self.steps.remove(step);
+    });
   }
 }
 
+function StepViewModel() {
+  var self = this;
+  self.id = ko.observable('');
+  self.recipe_name = ko.observable();
+  self.description = ko.observable('');
+  self.time = ko.observable('');
+  self.temperature = ko.observable('');
+  self.wait = ko.observable('');
+
+  self.save = function() {
+    $('#step').modal('hide');
+    recipesViewModel.stepSave({
+      id: self.id(),
+      recipe_name: self.recipe_name(),
+      description: self.description(),
+      time: self.time(),
+      temperature: self.temperature(),
+      wait: self.wait(),
+    });
+  }
+
+}

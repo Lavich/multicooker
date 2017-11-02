@@ -23,8 +23,6 @@ def recipe_list(request, response):
     """
     recipe_names = list(set(list(Step.filter('recipe_name'))))
     recipe_list = list(map(lambda x: {'name': x, 'url':  generate_url('/api/steps/' + x)}, recipe_names))
-    # recipe_names = list(map(lambda x: {x: generate_url('/api/steps/' + x)}, recipe_names))
-    print(recipe_list)
     yield from picoweb.jsonify(response, {'recipes': recipe_list})
 
 
@@ -40,7 +38,7 @@ def recipe_detail(request, response):
     yield from picoweb.jsonify(response, {'steps': steps})
 
 
-@app.route('/api/steps', methods=['GET', 'POST'])
+@app.route('/api/steps', methods=['POST'])
 def step_list(request, response):
     if request.method == 'POST':
         """
@@ -50,10 +48,11 @@ def step_list(request, response):
         data = request.form
         for key in data.keys():
             data[key] = data[key][0]
+        print(data)
         if data.get('recipe_name'):
-            Step.create(data)
-            steps = {'steps': list(Step.filter(recipe_name=data.get('recipe_name')))}
-            yield from picoweb.jsonify(response, {'steps': steps})
+            new_step = Step.create(data)
+            print(new_step)
+            yield from picoweb.jsonify(response, {'step': new_step})
 
 
 @app.route(re.compile('^/api/steps/(.+)'), methods=['PUT', 'DELETE'])
@@ -66,13 +65,15 @@ def step_detail(request, response):
         yield from request.read_form_data()
         data = request.form
         print(data)
+        for key in data.keys():
+            data[key] = data[key][0]
         step = Step.update(pkey, data)
         print(step)
-        yield from picoweb.jsonify(response, {'success': 'True'})
+        yield from picoweb.jsonify(response, {'step': step})
 
     if request.method == 'DELETE':
         """
         Delete Step[id]
         """
         Step.delete(pkey)
-        yield from picoweb.jsonify(response, {'steps': steps})
+        yield from picoweb.jsonify(response, {'success': 'True'})
