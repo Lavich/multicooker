@@ -61,7 +61,7 @@ function RecipesViewModel() {
   {
     $('#step').modal('show');
     stepViewModel.id('');
-    stepViewModel.recipe_name(step.recipe());
+    stepViewModel.recipe_name(self.recipe());
   }
 
   self.beginEdit = function(step)
