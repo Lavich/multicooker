@@ -25,7 +25,6 @@ function RecipesViewModel() {
       cache: false,
       dataType: 'json',
       data: data
-      // JSON.stringify(data)
     };
     return $.ajax(request);
   }
@@ -61,13 +60,14 @@ function RecipesViewModel() {
   {
     $('#step').modal('show');
     stepViewModel.id('');
-    stepViewModel.recipe_name(self.recipe());
+    stepViewModel.recipe_name(self.recipe()[0]);
   }
 
   self.beginEdit = function(step)
   {
     $('#step').modal('show');
     stepViewModel.id(step.id());
+    console.log(step.recipe_name());
     stepViewModel.recipe_name(step.recipe_name());
     stepViewModel.description(step.description());
     stepViewModel.time(step.time());
@@ -103,7 +103,6 @@ function RecipesViewModel() {
   }
 
   self.remove = function(step) {
-    console.log(step.id());
     self.ajax('api/steps/' + step.id(), 'DELETE').done(function() {
       self.steps.remove(step);
     });
@@ -113,7 +112,7 @@ function RecipesViewModel() {
 function StepViewModel() {
   var self = this;
   self.id = ko.observable('');
-  self.recipe_name = ko.observable();
+  self.recipe_name = ko.observable('');
   self.description = ko.observable('');
   self.time = ko.observable('');
   self.temperature = ko.observable('');
@@ -121,6 +120,7 @@ function StepViewModel() {
 
   self.save = function() {
     $('#step').modal('hide');
+    console.log(self.recipe_name());
     recipesViewModel.stepSave({
       id: self.id(),
       recipe_name: self.recipe_name(),
