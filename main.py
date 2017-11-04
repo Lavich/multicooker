@@ -3,7 +3,7 @@ import uasyncio as asyncio
 import sys
 
 from app import app
-import hardware
+import hardware 
 import views
 
 
@@ -23,7 +23,7 @@ def main(**params):
 
     loop = asyncio.get_event_loop()
     loop.create_task(asyncio.start_server(app._handle, app.host, app.port))
-    loop.create_task(hardware.run())
+    # loop.create_task(hardware.run())
     loop.run_forever()
     loop.close()
 

@@ -15,7 +15,7 @@ function RecipesViewModel() {
   self.steps = ko.observableArray();
   self.recipe_list = ko.observableArray();
   self.recipe = ko.observable();
-
+  
   self.ajax = function(uri, method, data) {
     var request = {
       url: uri,
@@ -30,7 +30,7 @@ function RecipesViewModel() {
   }
 
   self.updateListRecipes = function(){
-    self.ajax(self.apiURI + '/recipes', 'GET').done(function(data) {
+    $.getJSON(self.apiURI + '/recipes', function(data) {
       for (var i = 0; i < data.recipes.length; i++) {
         self.recipe_list.push(data.recipes[i].name);
       };
@@ -40,7 +40,7 @@ function RecipesViewModel() {
 
 
   self.updateSteps = function(){
-    self.ajax(self.apiURI + '/recipes/' + self.recipe(), 'GET').done(function(data) {
+    $.getJSON(self.apiURI + '/recipes/' + self.recipe(), function(data) {
       self.steps([]);
       for (var i = 0; i < data.steps.length; i++) {
         self.steps.push({

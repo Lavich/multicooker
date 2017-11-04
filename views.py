@@ -5,7 +5,7 @@ from models import Step
 
 import ure as re
 import picoweb
-from hardware import recipe_event
+from hardware import start_event
 
 def generate_url(name):
     return 'http://' + app.host + '/' + str(app.port) + name.replace(" ", "-")
@@ -82,11 +82,11 @@ def step_detail(request, response):
 def start(request, response):
     pkey = picoweb.utils.unquote_plus(request.url_match.group(1))
     pkey = pkey.replace("-", " ")
-    recipe_event.set(pkey)
+    start_event.set(pkey)
     yield from picoweb.jsonify(response, {'success': 'True'})
 
 
 @app.route('/api/stop')
 def stop(request, response):
-    recipe_event.clear()
+    start_event.clear()
     yield from picoweb.jsonify(response, {'success': 'True'})

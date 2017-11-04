@@ -14,8 +14,8 @@ SERIAL_R = 120000
 B = 3950
 
 
-recipe_event = Event()
-setpoint_event = Event()
+start_event = Event()
+step_event = Event()
 relay_event = Event()
 
 def termistor(adc):
@@ -47,48 +47,61 @@ def mediana(temp):
 
 def pid(setpoint):
 	pass
-	return 0
+	return 0.5
 
-async def start(recipe_event):
-    while True:
-        await recipe_event
-        steps = list(Step.filter(recipe_name=recipe_event.value()))
-        recipe_event.clear()
-        for step in steps:
-        	print('Recipe={} Step_id={}'.format(step['recipe_name'], step['id']))
-        	setpoint_event.set(step)
 
 
 async def measure_temp():
+    """
+    Measure temperature in AO
+    """
     while True:
-    	temp = 10
-    	temp = mediana(temp)
-    	
-        await asyncio.sleep(2)
+        temp = 10
+        temp = mediana(temp)   	
+        await asyncio.sleep(1)
+
+
+async def start(start_event):
+    """
+	Start function
+	"""
+    while True:
+        await start_event
+        steps = list(Step.filter(recipe_name=start_event.value()))
+        start_event.clear()
+        for step in steps:
+            print('Recipe={} Step_id={} time={}s'.format(step['recipe_name'], step['id'], step['time']))
+            step_event.set(int(step['temperature']))
+            await asyncio.sleep(int(step['time']))
+
+
+async def step(step_event):
+    while True:
+        await step_event
+        while step_event.is_set():
+            setpoint = step_event.value()
+            u = pid(setpoint)
+            relay_event.set(u)
+            print('def step: setpoint={}'.format(setpoint))
+            await asyncio.sleep_ms(1000)
+
 
 async def relay(relay_event):
     while True:
         await relay_event
         while relay_event.is_set():
+            time_on = int(relay_event.value()) * 1000
+            time_off = 1000 - time_on
             print('relay ON')
-            await asyncio.sleep_ms(1000)
-	
-async def pid(setpoint_event, relay_event):
-    while True:
-    	await setpoint_event
-        while setpoint_event.is_set():
-            id = setpoint_event.value()['id']
-            time = setpoint_event.value()['time']
-            setpoint = setpoint_event.value()['temperature']
-            relay_event.set(setpoint)
-            print('id={} time={} temp={}'.format(id, time, setpoint))
-            await asyncio.sleep(int(time))
-        relay_event.clear()
+            await asyncio.sleep_ms(time_on)
+            print('relay OFF')
+            await asyncio.sleep_ms(time_off)
+
 
 async def run():
     loop = asyncio.get_event_loop()
 
     loop.create_task(measure_temp())
     loop.create_task(relay(relay_event))
-    loop.create_task(start(recipe_event))
-    loop.create_task(pid(setpoint_event, relay_event))
+    loop.create_task(start(start_event))
+    loop.create_task(step(step_event))
