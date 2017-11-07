@@ -2,7 +2,7 @@ from app import app
 from models import Recipe
 import ure as re
 import picoweb
-from hardware import start_event
+from hardware import timer_event, setpoint
 
 
 @app.route('/')
@@ -37,6 +37,9 @@ def recipe_list(request, response):
 
 @app.route(re.compile('^/recipes/(.+)'))
 def recipe_detail(request, response):
+    """
+    Delete recipe
+    """
     if request.method == 'DELETE':
         Recipe.delete(pkey)
         yield from picoweb.jsonify(response, {'success': 'True'})
@@ -44,21 +47,28 @@ def recipe_detail(request, response):
 
 @app.route(re.compile('^/start'))
 def start(request, response):
+    """
+    Start heating
+    request = {'time': 10, 'temp': 100}
+    """
     if request.method == 'POST':
         yield from request.read_form_data()
         data = request.form
         for key in data.keys():
             data[key] = data[key][0]
         print(data)
-        clear_data = {}
-        for name in Recipe.fields:
-            clear_data[name] = data.get(name)
-        if clear_data['time'] and clear_data['temp']:
-            start_event.set(clear_data)
-            yield from picoweb.jsonify(response, {'success': 'True'})
+        if data.get('time'):
+            timer_event.set(int(data.get('time')) * 60)
+        if data.get('temp'):
+            setpoint = int(data.get('temp'))
+            print(setpoint)
+        yield from picoweb.jsonify(response, {'success': 'True'})
 
 
 @app.route('/stop')
 def stop(request, response):
-    start_event.clear()
+    """
+    Stop heating
+    """
+    timer_event.clear()
     yield from picoweb.jsonify(response, {'success': 'True'})

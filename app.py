@@ -3,7 +3,7 @@ import picoweb
 import sys
 import uasyncio as asyncio
 import models
-from hardware import sensor, start, relay, heater, relay_event, heater_event, start_event
+from hardware import sensor, timer_event, heater, setpoint
 
 
 class DBApp(picoweb.WebApp):
@@ -33,9 +33,9 @@ class DBApp(picoweb.WebApp):
             print("* Running on http://%s:%s/" % (self.host, self.port))
         loop.create_task(asyncio.start_server(self._handle, self.host, self.port))
         loop.create_task(sensor())
-        loop.create_task(start(start_event))
-        loop.create_task(relay(relay_event))
-        loop.create_task(heater(heater_event))
+        # loop.create_task(start(start_event))
+        # loop.create_task(relay(relay_event))
+        loop.create_task(heater(timer_event, setpoint))
         loop.run_forever()
         loop.close()
 
