@@ -1,6 +1,6 @@
 import ujson
-
 import btree
+
 
 class DB:
 
@@ -25,80 +25,23 @@ class DB:
 db = DB("multicooker.db")
 
 
-class Step:
+class Recipe:
     """docstring for Step"""
     __db__ = db
+    fields = ['name', 'time', 'temp']
 
     @classmethod
-    def create(cls, data, id=None):
-        if not id:
-            id = cls.next_id()
-        str = ujson.dumps(data)    
-        cls.__db__.db[id] = str
+    def create(cls, data, id='0'): 
+        cls.__db__.db[str(id)] = data
         cls.__db__.db.flush()
-        data['id'] = id
         return data
 
     @classmethod
-    def update(cls, id, new_data):
-        data = cls.get_id(id)
-        data.update(new_data)
-        return cls.create(data, id=id)
-
-    @classmethod
     def delete(cls, key):
-        key = str(key)
-        del cls.__db__.db[key]
+        del cls.__db__.db[str(key)]
 
     @classmethod
-    def get_id(cls, key):
-        key = str(key)
-        return ujson.loads(cls.__db__.db[key])
-
-    @classmethod
-    def next_id(cls):
-        last_id = 0
-        keys_str = list(cls.__db__.db.keys())
-        if keys_str:
-            keys = list(map(lambda x: int(x), keys_str))
-            keys.sort()
-            last_id = keys[-1]
-        return str(last_id + 1)
-
-    @classmethod
-    def filter(cls, *args, **kwargs):
-        """
-        >>> filter('recipe_name')
-        ['Pasta', 'Tea', 'Cake']
-
-        >>> filter(recipe_name='Pasta')
-        {'id': '7', temp': '100', 'time': '8', 'recipe_name': 'Pasta'}
-        """
-        if args:
-            elem = str(args[0])
-            for v in cls.__db__.db.values():
-                try:
-                    row = v.decode()
-                    row = ujson.loads(row)
-                except:
-                    row = {}
-                if type(row) == dict and row.get(elem):    
-                    yield row.get(elem)
-
-        elif kwargs:
-            for k, v in cls.__db__.db.items():
-                for key, value in kwargs.items():
-                    try:
-                        row = v.decode()
-                        row = ujson.loads(row)
-                    except:
-                        row = {}
-                    if type(row) == dict and row.get(key) == value:    
-                        step = ujson.loads(v.decode())
-                        step['id'] = k.decode()
-                        yield step
-        else:
-            for value in cls.__db__.db.values():
-                yield value.decode()
-
-        
+    def get_all_recipes(cls, *args, **kwargs):
+        for value in cls.__db__.db.values():
+            yield ujson.loads(value.decode())
+     

@@ -1,107 +1,66 @@
-import sys
-import utime
-import uasyncio
-from asyn import Event
-
-import math
 import uasyncio as asyncio
+from asyn import Event
+# from machine import ADC, Pin
 
-from models import Step
-
-NOMINAL_T = 25
-THERMISTOR_R = 100000
-SERIAL_R = 120000
-B = 3950
-
-
-start_event = Event()
-step_event = Event()
+setpoint_event = Event()
 relay_event = Event()
+heater_event = Event()
+start_event = Event()
+temperature = 0
+RELAY_CICLE_SEC = 10
 
-def termistor(adc):
-    resistor = SERIAL_R / (1023 / adc - 1)
-    temperature = 1 / (math.log(resistor / THERMISTOR_R) / B + 1 / (NOMINAL_T + 273.15)) - 273.15
-    return temperature
+# adc = ADC(0)
+# relay = Pin()
 
-
-if sys.platform == 'esp8266':
-	from machine import ADC, Pin
-	adc = ADC(0)
-	relay = Pin(2, Pin.OUT)
-	def termistor():
-		volume = adc.read()
-		temperature = volume
-		return temperature
-else:
-	import math
-	relay = lambda x: print('Relay is {}'.format(x))
-	termistor = math.sin(utime.time()/90)
-
-mediana_list = 7*[0]
-
-def mediana(temp):
-	mediana_list.pop(0)
-	mediana_list.append(temp)
-	temp = sorted(mediana_list)[3]
-	return temp
-
-def pid(setpoint):
-	pass
-	return 0.5
-
-
-
-async def measure_temp():
-    """
-    Measure temperature in AO
-    """
-    while True:
-        temp = 10
-        temp = mediana(temp)   	
-        await asyncio.sleep(1)
-
+async def sensor():
+	i=0
+	while True:
+		await asyncio.sleep(1)
+		# volume = adc.read()
+		# temperature = termistor(volume)	
+		i += 1
+		print('def sensor({})'.format(i))
 
 async def start(start_event):
-    """
-	Start function
-	"""
-    while True:
-        await start_event
-        steps = list(Step.filter(recipe_name=start_event.value()))
-        start_event.clear()
-        for step in steps:
-            print('Recipe={} Step_id={} time={}s'.format(step['recipe_name'], step['id'], step['time']))
-            step_event.set(int(step['temperature']))
-            await asyncio.sleep(int(step['time']))
+	while True:
+		await start_event
+		print('def start()')
+		data = start_event.value()
+		temp = int(data['temp'])
+		time = int(data['time'])
+		await set_heater(temp, time)
+		start_event.clear()
 
+async def set_heater(setpoint, time):
+	print('def set_heater(setpoint={}, time={})'.format(setpoint, time))
+	heater_event.set(setpoint)
+	await asyncio.sleep(time)
+	heater_event.clear()
+	return 0
 
-async def step(step_event):
-    while True:
-        await step_event
-        while step_event.is_set():
-            setpoint = step_event.value()
-            u = pid(setpoint)
-            relay_event.set(u)
-            print('def step: setpoint={}'.format(setpoint))
-            await asyncio.sleep_ms(1000)
-
-
+async def heater(setpoint):
+	while True:
+		await heater_event
+		while heater_event.is_set():
+			print('def heater()')
+			# u = pid(heater_event.value(), temperature)
+			u = 0.5
+			relay_event.set(u)
+			await asyncio.sleep(RELAY_CICLE_SEC)
+		relay_event.clear()
+		
 async def relay(relay_event):
-    while True:
-        await relay_event
-        while relay_event.is_set():
-            time_on = int(relay_event.value()) * 1000
-            time_off = 1000 - time_on
-            print('relay ON')
-            await asyncio.sleep_ms(time_on)
-            print('relay OFF')
-            await asyncio.sleep_ms(time_off)
+	while True:
+		await relay_event
+		while relay_event.is_set():
+			print('def relay()')
+			relay_on = relay_event.value() * RELAY_CICLE_SEC
+			relay_off = RELAY_CICLE_SEC - relay_on
+			# relay.higth()
+			print('relay ON')
+			await asyncio.sleep(relay_on)
+			print('relay OFF')
+			# relay.low()
+			await asyncio.sleep(relay_off)
+		print('relay OFF')
 
-
-async def run():
-    loop = asyncio.get_event_loop()
-
-    loop.create_task(measure_temp())
-    loop.create_task(relay(relay_event))
-    loop.create_task(start(start_event))
-    loop.create_task(step(step_event))
