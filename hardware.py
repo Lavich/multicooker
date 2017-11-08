@@ -5,6 +5,7 @@ import pid
 import math
 
 
+setpoint_event = Event()
 timer_event = Event()
 temp_event = Event()
 temp_event.set(10)
@@ -26,6 +27,8 @@ if sys.platform == 'esp8266':
 	# pwm.duty(512)
 else:
 	def relay(state):
+		if state:
+			temp_event.set(temp_event.value() + mypid.output)
 		print('relay {}'.format(state))
 
 
@@ -34,15 +37,17 @@ async def heater(timer_event):
 		await timer_event	
 		print('==start heating==')	
 		while timer_event.is_set():	
-			data =	timer_event.value()
-			time = data.get('time')
-			setpoint = data.get('setpoint')
+			time = timer_event.value()
+			setpoint = setpoint_event.value()
+			temp = temp_event.value()
 
 			if time > 0:
-				print('time = {} setpoint = {}'.format(time, setpoint))
-				time -= RELAY_CICLE_SEC
+				timer_event.set(time - RELAY_CICLE_SEC)
+				print('time_lost = {} setpoint = {}'.format(time, setpoint))
+				
+
 				mypid.SetPoint = setpoint
-				mypid.update(temp_event.value())
+				mypid.update(temp)
 				u = mypid.output
 				if u < 0:
 					u = 0
@@ -55,6 +60,7 @@ async def heater(timer_event):
 				await asyncio.sleep(RELAY_CICLE_SEC - u)
 			else:
 				timer_event.clear()
+				setpoint_event.clear()
 				print('==stop heating==')
 
 async def sensor():
@@ -65,8 +71,5 @@ async def sensor():
 		# temperature = termistor(volume)
 		# temperature = int(100 * math.sin(i/360))
 		# i += 1
-		if mypid.output:
-			print(mypid.output)
-			temp_event.set(temp_event.value() + mypid.output)
 
 		print('temperature = {}'.format(temp_event.value()))
