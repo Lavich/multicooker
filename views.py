@@ -2,7 +2,7 @@ from app import app
 from models import Recipe
 import ure as re
 import picoweb
-from hardware import timer_event, setpoint
+from hardware import timer_event
 
 
 @app.route('/')
@@ -54,14 +54,11 @@ def start(request, response):
     if request.method == 'POST':
         yield from request.read_form_data()
         data = request.form
-        for key in data.keys():
-            data[key] = data[key][0]
-        print(data)
-        if data.get('time'):
-            timer_event.set(int(data.get('time')) * 60)
-        if data.get('temp'):
-            setpoint = int(data.get('temp'))
-            print(setpoint)
+        if data.get('time') and data.get('temp'):
+            time = int(data.get('time')[0]) * 60
+            setpoint = int(data.get('temp')[0])
+            timer_event.set({'time': time, 'setpoint': setpoint})
+            print(timer_event.value())
         yield from picoweb.jsonify(response, {'success': 'True'})
 
 
