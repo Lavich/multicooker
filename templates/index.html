@@ -4,115 +4,50 @@
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script> 
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.4.2/knockout-min.js"></script>
-	<!-- <script src="static/js/knockout-3.4.2.js"></script> -->
+	<script src="https://ru.vuejs.org/js/vue.js"></script>
+	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 	<script src="static/js/multicooker.js"></script>
 </head>
 
 <body>
 	<style>
 	.container { 
-		width: 300px; 
-	}
-	.btn-command {
-		width: 90px;
+		width: 270px; 
 	}
 </style> 
-<div class="container" id="main">
-
-	<h1 data-bind="text: recipe"></h1>
-
+<div class="container">
+	<br>
 	<div class="row">
-
-		<div class="input-group">
-			<select class="form-control" data-bind="options: recipe_list,
-			selectedOptions: recipe,
-			event:{ change: updateSteps}">
-			</select>            
-			<span class="input-group-btn">
-				<button class="btn btn-success" type="button" >Start <span class="glyphicon glyphicon-play" ></span></button>
-			</span>
-		</div>
-	</div> 
-
-<br>
-
-<!-- ko foreach: steps -->  
-<div class="row" >
-	<div class="panel panel-primary">
-		<div class="panel-heading" >
-			<button type="button" class="btn btn-default btn-xs pull-right close" data-bind="click: $parent.remove">
-				<span class="glyphicon glyphicon-remove"></span> 
-			</button>
-			<p><b data-bind="text: description"></b></p>
-		</div>
-
-		<div class="panel-body">
-			<h3 data-bind="text: temperature"></h3>
-			<h3 data-bind="text: time"></h3>
-		</div>
-		<div class="panel-footer">
-			<button type="button" data-bind="click: $parent.beginEdit" class="btn btn-default">
-				<span class="glyphicon glyphicon-pencil "></span> Edit
-			</button>
-
-			<button type="button" class="btn btn-default pull-right "  >
-				<span class="glyphicon glyphicon-pause "></span> Pause
-			</button>
-
-		</div>
+		<div class="panel panel-primary" id="heater">
+			<div class="panel-heading" align="right">
+				<button type="button" class="btn btn-default btn-xs">WiFi</button>
+				<button type="button" class="btn btn-default btn-xs">PID</button>
+			</div>
+			<div class="panel-body">
+				<div class="row" align="center">
+					<div class="col-xs-6">
+						<h2>
+							<div v-if="isStart" >{{ timeLeft }} min</div>
+							<div v-else><input v-model="timeSet" class="form-control" placeholder="Time"></div>
+						</h2>      
+					</div>
+					<div class="col-xs-6">
+						<h2>
+							<div v-if="isStart" >{{ tempNow }}°C</div>
+							<div v-else><input v-model="tempSet" class="form-control" placeholder="Temp"></div>
+						</h2>      
+					</div>
+				</div>
+				<div class="row" align="center">
+					<div class="col-xs-6"><span class="badge">{{ timeSet }} min</span></div>
+					<div class="col-xs-6"><span class="badge">{{ tempSet }}°C</span></div>
+				</div>
+			</div>
+			<div class="panel-footer" align="center">
+				<button type="button" class="btn btn-success" @click="start" v-show:class="!isStart">START</button>
+          		<button type="button" class="btn btn-danger" @click="stop" v-show:class="isStart">STOP</button>
+			</div>
 	</div> 
 </div>
-
-<!-- /ko -->
-
-<div class="row">
-	<button type="button" data-bind="click: beginAdd" class="btn btn-default center-block" style="width:100px">
-		<span class="glyphicon glyphicon-plus"></span> Add step
-	</button>
-</div>
-<br>
 </div> 
-
-<!-- Modal Add step -->
-<div class="modal fade" id="step" role="dialog">
-	<div class="modal-dialog modal-sm">
-		<div class="modal-content">
-			<div class="modal-header">
-				<button type="button" class="close" data-dismiss="modal">&times;</button>
-				<h4 class="modal-title">Add step</h4>
-			</div>
-			<div class="modal-body">
-				<form>
-					<div class="form-group form-horizontal">
-						<label for="email">Name recipe:</label>
-						<input type="text" class="form-control" id="recipe_name" data-bind="value: recipe_name" pattern="^[a-zA-Z\s]+$">
-					</div>
-					<div class="form-group">
-						<label for="comment">Desription:</label>
-						<textarea class="form-control" rows="2" id="comment" data-bind="value: description"></textarea>
-					</div> 
-					<div class="form-group">
-						<label for="email">Temperature:</label>
-						<input type="text" class="form-control" id="temp" data-bind="value: temperature" pattern="[0-9]">
-					</div>
-					<div class="form-group">
-						<label for="pwd">Time:</label>
-						<input type="text" class="form-control" id="time" data-bind="value: time" pattern="[0-9]">
-					</div>           
-					<div class="checkbox">
-						<label><input type="checkbox"> Pause after step</label>
-					</div>
-				</form> 
-			</div>
-			<div class="modal-footer">
-				<button type="button" data-bind="click: save" class="btn btn-default">Save</button>
-				
-				<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-			</div>
-		</div>
-	</div>
-</div>
-
-
 </body>

@@ -1,134 +1,43 @@
-
-var recipesViewModel = new RecipesViewModel();
-var stepViewModel = new StepViewModel();
-
-
 window.onload = function () {
-  ko.applyBindings(recipesViewModel, $('#main')[0]);
-  ko.applyBindings(stepViewModel, $('#step')[0]);
-}
-
-
-function RecipesViewModel() {
-  var self = this;
-  self.apiURI = window.location.href + 'api';
-  self.steps = ko.observableArray();
-  self.recipe_list = ko.observableArray();
-  self.recipe = ko.observable();
-  
-  self.ajax = function(uri, method, data) {
-    var request = {
-      url: uri,
-      type: method,
-      contentType: "application/json",
-      accepts: "application/json",
-      cache: false,
-      dataType: 'json',
-      data: data
-    };
-    return $.ajax(request);
-  }
-
-  self.updateListRecipes = function(){
-    $.getJSON(self.apiURI + '/recipes', function(data) {
-      for (var i = 0; i < data.recipes.length; i++) {
-        self.recipe_list.push(data.recipes[i].name);
-      };
-    });
-  }
-  self.updateListRecipes(); 
-
-
-  self.updateSteps = function(){
-    $.getJSON(self.apiURI + '/recipes/' + self.recipe(), function(data) {
-      self.steps([]);
-      for (var i = 0; i < data.steps.length; i++) {
-        self.steps.push({
-          recipe_name: ko.observable(data.steps[i].recipe_name),
-          id: ko.observable(data.steps[i].id),
-          time: ko.observable(data.steps[i].time),
-          temperature: ko.observable(data.steps[i].temperature),
-          wait: ko.observable(data.steps[i].wait),
-          description: ko.observable(data.steps[i].description),
-
-        });
-      };
-    });
-  };
-
-  self.beginAdd = function(step)
-  {
-    $('#step').modal('show');
-    stepViewModel.id('');
-    stepViewModel.recipe_name(self.recipe()[0]);
-  }
-
-  self.beginEdit = function(step)
-  {
-    $('#step').modal('show');
-    stepViewModel.id(step.id());
-    console.log(step.recipe_name());
-    stepViewModel.recipe_name(step.recipe_name());
-    stepViewModel.description(step.description());
-    stepViewModel.time(step.time());
-    stepViewModel.temperature(step.temperature());
-    stepViewModel.wait(step.wait());
-  }
-
-  self.stepSave = function(step) {
-    var url = 'api/steps';
-    var method = 'POST';
-    if (step.id) {
-      url += '/' + step.id;
-      method = 'PUT';
+  var heater = new Vue({
+    el: '#heater',
+    data: {
+      timeLeft: 110,
+      timeSet: 200,
+      tempNow: 100,
+      tempSet: 200,
+      isStart: false,
+    },
+    computed: {
+      timeLeftHour: function () {
+        return Math.floor(this.timeLeft / 60) + ":" + this.timeLeft % 60;
+      },
+      timeSetHour: function () {
+        return Math.floor(this.timeSet / 60) + ":" + this.timeSet % 60;
+      }
+    },
+    methods: {
+      start: function () {
+        var params = new URLSearchParams();
+        params.append('temp_set', this.tempSet);
+        params.append('time_set', this.timeSet);
+        axios.post('/start', params);
+      },
+      stop: function () {
+        axios.post('/stop');
+      }
     }
-    console.log(url);
-    self.ajax(url, method, step).done(function(data) {
-      console.log(data);
-      if (data.step.recipe_name == self.recipe_name) {
-        self.steps.push({
-          recipe_name: ko.observable(data.step.recipe_name),
-          id: ko.observable(data.step.id),
-          time: ko.observable(data.step.time),
-          temperature: ko.observable(data.step.temperature),
-          wait: ko.observable(data.step.wait),
-          description: ko.observable(data.step.description),
-        });
-      }
-      else{
-        self.recipe_list.push(data.step.recipe_name);
-        self.updateSteps();
-      }
-    });
-  }
+  });
 
-  self.remove = function(step) {
-    self.ajax('api/steps/' + step.id(), 'DELETE').done(function() {
-      self.steps.remove(step);
-    });
-  }
-}
-
-function StepViewModel() {
-  var self = this;
-  self.id = ko.observable('');
-  self.recipe_name = ko.observable('');
-  self.description = ko.observable('');
-  self.time = ko.observable('');
-  self.temperature = ko.observable('');
-  self.wait = ko.observable('');
-
-  self.save = function() {
-    $('#step').modal('hide');
-    console.log(self.recipe_name());
-    recipesViewModel.stepSave({
-      id: self.id(),
-      recipe_name: self.recipe_name(),
-      description: self.description(),
-      time: self.time(),
-      temperature: self.temperature(),
-      wait: self.wait(),
-    });
-  }
-
-}
+  var interval = setInterval(function(){
+    axios.get('/status')
+      .then(function(response) {
+        console.log(response.data);
+        heater.tempNow = Math.round(response.data['temp_now']), 1;
+        // heater.tempSet = response.data['temp_set'];
+        heater.timeLeft = response.data['time_left'];
+        heater.isStart = response.data['is_start'];
+      })
+      ;}, 
+  1000);
+};
