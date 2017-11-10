@@ -1,5 +1,6 @@
 from app import app
 from models import Recipe
+import math
 import ure as re
 import picoweb
 from hardware import timer_event, mypid, setpoint_event, temp_event
@@ -55,13 +56,13 @@ def start(request, response):
         yield from request.read_form_data()
         data = request.form
         print(data)
-        timer_event.set(60 * int(data.get('time')[0]))
-        setpoint_event.set(int(data.get('temp')[0]))
+        timer_event.set(60 * int(data.get('time_set')[0]))
+        setpoint_event.set(int(data.get('temp_set')[0]))
         
         yield from picoweb.jsonify(response, {'success': 'True'})
 
 
-@app.route('/stop')
+@app.route('/stop', method = 'POST')
 def stop(request, response):
     """
     Stop heating
@@ -76,13 +77,29 @@ def status(request, response):
     Return status
     """
     data = {}
+    if setpoint_event.is_set():
+        data['temp_set'] = round(setpoint_event.value())
+    if temp_event.is_set():
+        data['temp_now'] = round(temp_event.value(), 1)
+    if timer_event.is_set():
+        data['time_left'] = math.ceil(timer_event.value() / 60)
+        data['is_start'] = True
+    else:
+        data['is_start'] = False
+    yield from picoweb.jsonify(response, data)
+
+
+@app.route('/pid')
+def pid(request, response):
+    """
+    Return status
+    """
+    data = {}
 
     if temp_event.is_set():
-        data['temperature'] = round(temp_event.value(), 1)
-    if timer_event.is_set():
-        data['time_lost'] = round(timer_event.value()/60, 2)
+        data['temp_now'] = round(temp_event.value())
     if setpoint_event.is_set():
-        data['setpoint'] = round(setpoint_event.value(), 1)
+        data['temp_set'] = round(setpoint_event.value())
     data['u'] = round(mypid.output, 1)
     data['p'] = mypid.Kp
     data['i'] = mypid.Ki
