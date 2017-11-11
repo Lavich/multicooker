@@ -5,49 +5,97 @@
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script> 
 	<script src="https://ru.vuejs.org/js/vue.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.7.1/Chart.min.js"></script>
 	<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+	<script src="static/js/vue-charts.min.js"></script>
 	<script src="static/js/multicooker.js"></script>
 </head>
 
 <body>
 	<style>
-	.container { 
+	.panel-main, .panel-wifi { 
 		width: 270px; 
 	}
 </style> 
 <div class="container">
 	<br>
 	<div class="row">
-		<div class="panel panel-primary" id="heater">
-			<div class="panel-heading" align="right">
-				<button type="button" class="btn btn-default btn-xs">WiFi</button>
-				<button type="button" class="btn btn-default btn-xs">PID</button>
-			</div>
-			<div class="panel-body">
-				<div class="row" align="center">
-					<div class="col-xs-6">
-						<h2>
-							<div v-if="isStart" >{{ timeLeft }} min</div>
-							<div v-else><input v-model="timeSet" class="form-control" placeholder="Time"></div>
-						</h2>      
+		<div class="col-sm-5 col-md-4 col-lg-3 col-xs-12">
+			<div class="panel panel-primary panel-main" id="heater">
+				<div class="panel-heading" align="right">
+					<button type="button" class="btn btn-default btn-xs">WiFi</button>
+					<button type="button" class="btn btn-default btn-xs">PID</button>
+				</div>
+				<div class="panel-body">
+					<div class="row" align="center">
+						<div class="col-xs-6">
+							<h2>
+								<div v-if="isStart" >{{ timeLeft }} min</div>
+								<div v-else><input v-model="timeSet" class="form-control" placeholder="Time"></div>
+							</h2>      
+						</div>
+						<div class="col-xs-6">
+							<h2>
+								<div v-if="isStart" >{{ tempNow }}°C</div>
+								<div v-else><input v-model="tempSet" class="form-control" placeholder="Temp"></div>
+							</h2>      
+						</div>
 					</div>
-					<div class="col-xs-6">
-						<h2>
-							<div v-if="isStart" >{{ tempNow }}°C</div>
-							<div v-else><input v-model="tempSet" class="form-control" placeholder="Temp"></div>
-						</h2>      
+					<div class="row" align="center">
+						<div class="col-xs-6"><span class="badge">{{ timeSet }} min</span></div>
+						<div class="col-xs-6"><span class="badge">{{ tempSet }}°C</span></div>
 					</div>
 				</div>
-				<div class="row" align="center">
-					<div class="col-xs-6"><span class="badge">{{ timeSet }} min</span></div>
-					<div class="col-xs-6"><span class="badge">{{ tempSet }}°C</span></div>
+				<div class="panel-footer" align="center">
+					<button type="button" class="btn btn-success" @click="start" v-show:class="!isStart">START</button>
+					<button type="button" class="btn btn-danger" @click="stop" v-show:class="isStart">STOP</button>
+				</div>
+			</div> 
+		</div>
+		<div class="col-sm-5 col-md-4 col-lg-3 col-xs-12">
+			<div class="panel panel-wifi panel-primary" id="wifi" v-show:class="isShow">
+				<div class="panel-heading" align="center">
+					<span>WIFI "Lav"</span>
+				</div>
+				<div class="panel-body">
+					<div class="row" align="center">
+						<div class="col-xs-6">
+							<h2>
+								<input v-model="ssid" class="form-control" placeholder="SSID">
+							</h2>      
+						</div>
+						<div class="col-xs-6">
+							<h2>
+								<input v-model="password" class="form-control" placeholder="Password">
+							</h2>      
+						</div>
+					</div>
+				</div>
+				<div class="panel-footer" align="center">
+					<button type="button" class="btn btn-success" @click="connect">Connect</button>
+					<button type="button" class="btn btn-danger" @click="disconnect">Disconnect</button>
+				</div>
+			</div> 
+		</div>
+	</div>
+	<div class="row">
+		<div class="panel panel-primary" id="pid">
+			<div class="panel-heading" align="right">
+			</div>
+			<div class="panel-body">
+				<div>
+					<canvas id="mycanvas" count="3"></canvas>
+					<chartjs-line :datalabel="'PTerm'" :data="pTerm" :labels="labels" :bordercolor="'#00c853'" target="mycanvas"></chartjs-line>
+					<chartjs-line :datalabel="'ITerm'" :data="iTerm" :labels="labels" :bordercolor="'#07c513'" target="mycanvas"></chartjs-line>
+					<chartjs-line :datalabel="'DTerm'" :data="dTerm" :labels="labels" :bordercolor="'#100203'" target="mycanvas"></chartjs-line>
 				</div>
 			</div>
 			<div class="panel-footer" align="center">
 				<button type="button" class="btn btn-success" @click="start" v-show:class="!isStart">START</button>
-          		<button type="button" class="btn btn-danger" @click="stop" v-show:class="isStart">STOP</button>
+				<button type="button" class="btn btn-success" @click="stop" v-show:class="isStart">STOP</button>
 			</div>
-	</div> 
-</div>
+		</div> 
+	</div>
+
 </div> 
 </body>

@@ -1,6 +1,6 @@
 import gc
-import uasyncio as asyncio
-import sys
+# import uasyncio as asyncio
+# import sys
 
 from app import app
 import views
